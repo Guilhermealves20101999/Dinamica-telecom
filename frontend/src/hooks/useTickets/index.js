@@ -1,26 +1,33 @@
 import { useState, useEffect } from "react";
+import { getHoursCloseTicketsAuto } from "../../config";
 import toastError from "../../errors/toastError";
 
 import api from "../../services/api";
 
-const useTickets = ({
+let useTickets = ({
     searchParam,
     pageNumber,
     status,
+    userFilter,
+    queueFilter,
     date,
     showAll,
     queueIds,
     withUnreadMessages,
+    tags,
 }) => {
+
+    
     const [loading, setLoading] = useState(true);
     const [hasMore, setHasMore] = useState(false);
     const [tickets, setTickets] = useState([]);
     const [count, setCount] = useState(0);
 
+
     useEffect(() => {
         setLoading(true);
         const delayDebounceFn = setTimeout(() => {
-            const fetchTickets = async() => {
+            const fetchTickets = async () => {
                 try {
                     const { data } = await api.get("/tickets", {
                         params: {
@@ -31,11 +38,34 @@ const useTickets = ({
                             showAll,
                             queueIds,
                             withUnreadMessages,
+                            tags,
                         },
                     })
-                    setTickets(data.tickets)
+                    let tickets = [];
 
-                    let horasFecharAutomaticamente = process.env.REACT_APP_HOURS_CLOSE_TICKETS_AUTO
+                    if (queueIds) {
+                        let queueIdsJson = JSON.parse(queueIds);
+                        const ticketsSemfila = queueIdsJson.filter(item => item === 0)
+                        if (!ticketsSemfila || ticketsSemfila.length === 0) {
+                            tickets = data.tickets.filter(item => item.queueId != null)
+                        } else {
+                            tickets = data.tickets;
+                        }
+                    } else {
+                        tickets = data.tickets;
+                    }
+                    if (!!userFilter && !queueFilter) {
+                        tickets = tickets.filter(item => item.userId === userFilter.id);
+                    } else if (!!queueFilter && !userFilter) {
+                        if (queueFilter.id === 5) {
+                            tickets = tickets.filter(item => item.queueId === null);
+                        } else {
+                            tickets = tickets.filter(item => item.queueId === queueFilter.id);
+                        }
+                    }
+                    setTickets(tickets)
+
+                    let horasFecharAutomaticamente = getHoursCloseTicketsAuto();
 
                     if (status === "open" && horasFecharAutomaticamente && horasFecharAutomaticamente !== "" &&
                         horasFecharAutomaticamente !== "0" && Number(horasFecharAutomaticamente) > 0) {
@@ -61,7 +91,7 @@ const useTickets = ({
                 }
             }
 
-            const closeTicket = async(ticket) => {
+            const closeTicket = async (ticket) => {
                 await api.put(`/tickets/${ticket.id}`, {
                     status: "closed",
                     userId: ticket.userId || null,
@@ -72,6 +102,8 @@ const useTickets = ({
         }, 500)
         return () => clearTimeout(delayDebounceFn)
     }, [
+        userFilter,
+        queueFilter,
         searchParam,
         pageNumber,
         status,
@@ -79,6 +111,7 @@ const useTickets = ({
         showAll,
         queueIds,
         withUnreadMessages,
+        tags,
     ])
 
     return { tickets, loading, hasMore, count };

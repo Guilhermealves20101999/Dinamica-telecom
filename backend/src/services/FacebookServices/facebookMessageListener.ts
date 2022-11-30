@@ -73,7 +73,7 @@ export const verifyMessageMedia = async (
 
   const type = await fileTypeFromBuffer(data);
 
-  const fileName = `${new Date().getTime()}.${type.ext}`;
+  const fileName = `${new Date().getTime()}`;
 
   writeFileSync(
     join(__dirname, "..", "..", "..", "public", fileName),
@@ -105,7 +105,7 @@ export const verifyMessageMedia = async (
 
 export const handleMessage = async (
   webhookEvent: any,
-  channel
+  channel: string
 ): Promise<any> => {
   if (webhookEvent.message) {
     let msgContact: IMe;
@@ -128,7 +128,7 @@ export const handleMessage = async (
     const unreadCount = fromMe ? 0 : 1;
 
     const ticket = await FindOrCreateTicketService({
-      whatsappId: null,
+      //whatsappId: null,
       contact,
       unreadMessages: unreadCount,
       channel

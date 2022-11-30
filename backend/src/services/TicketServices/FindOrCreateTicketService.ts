@@ -1,7 +1,9 @@
-import { subHours } from "date-fns";
+import { add } from "date-fns";
 import { Op } from "sequelize";
 import Contact from "../../models/Contact";
 import Ticket from "../../models/Ticket";
+import Setting from "../../models/Setting";
+
 import ShowTicketService from "./ShowTicketService";
 
 interface IRequest {
@@ -10,6 +12,7 @@ interface IRequest {
   unreadMessages?: number;
   channel?: string;
   groupContact?: Contact;
+  queueId?:number;
 }
 
 const FindOrCreateTicketService = async ({
@@ -17,7 +20,8 @@ const FindOrCreateTicketService = async ({
   whatsappId,
   unreadMessages,
   channel,
-  groupContact
+  groupContact,
+  queueId
 }: IRequest): Promise<Ticket> => {
   let ticket = await Ticket.findOne({
     where: {
@@ -49,16 +53,23 @@ const FindOrCreateTicketService = async ({
         status: "pending",
         userId: null,
         unreadMessages,
-        channel
+        channel,
+        isBot: true,
+        queueId
       });
     }
   }
+  const msgIsGroupBlock = await Setting.findOne({
+    where: { key: "timeCreateNewTicket" }
+  });
+
+  const value = msgIsGroupBlock ? parseInt(msgIsGroupBlock.value, 10) : 7200;
 
   if (!ticket && !groupContact) {
     ticket = await Ticket.findOne({
       where: {
         updatedAt: {
-          [Op.between]: [+subHours(new Date(), 2), +new Date()]
+          [Op.between]: [+add(new Date(), { seconds: value }), +new Date()]
         },
         contactId: contact.id,
         whatsappId,
@@ -72,7 +83,9 @@ const FindOrCreateTicketService = async ({
         status: "pending",
         userId: null,
         unreadMessages,
-        channel
+        channel,
+        isBot: true,
+        queueId
       });
     }
   }
@@ -82,9 +95,11 @@ const FindOrCreateTicketService = async ({
       contactId: groupContact ? groupContact.id : contact.id,
       status: "pending",
       isGroup: !!groupContact,
+      isBot: true,
       unreadMessages,
       channel,
-      whatsappId
+      whatsappId,
+      queueId
     });
   }
 

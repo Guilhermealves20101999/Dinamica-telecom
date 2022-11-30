@@ -28,7 +28,10 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
 };
 
 export const store = async (req: Request, res: Response): Promise<Response> => {
-  const { name, color } = req.body;
+  const {
+    name,
+    color
+  } = req.body;
 
   const tag = await CreateService({
     name,
@@ -99,19 +102,18 @@ export const list = async (req: Request, res: Response): Promise<Response> => {
   return res.json(tags);
 };
 
-export const syncTags = async (
-  req: Request,
-  res: Response
-): Promise<Response> => {
-  const { tags, ticketId } = req.body;
+export const syncTags = async (req: Request, res: Response): Promise<Response> => {
+  const data = req.body;
 
-  const ticket = await SyncTagService({ tags, ticketId });
+  try {
+    if(data) {
+    const tags = await SyncTagService(data);
 
-  const io = getIO();
-  io.emit("tag", {
-    action: "update",
-    ticket
-  });
-
-  return res.status(200).json(ticket);
+  return res.json(tags);
+}
+  }
+  catch (err) {
+    throw new AppError("ERR_SYNC_TAGS", 500);
+  }
 };
+

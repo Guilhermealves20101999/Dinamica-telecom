@@ -217,7 +217,7 @@ const LoggedInLayout = ({ children }) => {
             noWrap
             className={classes.title}
           >
-            <img src="Logo-Login.png" width="15%" alt=""/>
+            <img src="Logo-Login.png" width="7%" alt=""/>
           </Typography>
           {user.id && <NotificationsPopOver />}
 

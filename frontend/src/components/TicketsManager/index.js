@@ -103,6 +103,20 @@ const TicketsManager = () => {
   const searchInputRef = useRef();
   const { user } = useContext(AuthContext);
 
+  // Aqui listamos a fila sem Fila
+  
+  let queueSemFila = user.queues.filter(item => item.id == 0 )[0];
+  if (!queueSemFila) {
+    user.queues = [
+      {
+        color: "#7C7C7C",
+        id: 0,
+        name: "Sem fila",
+      },...user.queues
+    ];
+  }
+ 
+
   const [openCount, setOpenCount] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
   const [selectedTags, setSelectedTags] = useState([]);
@@ -123,23 +137,24 @@ const TicketsManager = () => {
     }
   }, [tab]);
 
-  let searchTimeout;
+  //let searchTimeout;
 
   const handleSearch = (e) => {
+    // if (e.key === "Enter") {
     const searchedTerm = e.target.value.toLowerCase();
-
-    clearTimeout(searchTimeout);
-
+    // clearTimeout(searchTimeout);
     if (searchedTerm === "") {
       setSearchParam(searchedTerm);
       setTab("open");
       return;
     }
 
-    searchTimeout = setTimeout(() => {
-      setSearchParam(searchedTerm);
-    }, 500);
+    //setTimeout(() => {
+    setSearchParam(searchedTerm);
+    //}, 10);
+    //}
   };
+
 
   const handleSelectedTags = (selecteds) => {
     const tags = selecteds.map(t => t.id);
@@ -204,8 +219,9 @@ const TicketsManager = () => {
               inputRef={searchInputRef}
               placeholder={i18n.t("tickets.search.placeholder")}
               type="search"
-              onChange={handleSearch}
+              onKeyUp={handleSearch}
             />
+
           </div>
         ) : (
           <>
@@ -303,7 +319,7 @@ const TicketsManager = () => {
         />
       </TabPanel>
       <TabPanel value={tab} name="search" className={classes.ticketsWrapper}>
-      <TagsFilter onFiltered={handleSelectedTags} />
+        <TagsFilter onFiltered={handleSelectedTags} />
         <TicketsList
           searchParam={searchParam}
           tags={selectedTags}

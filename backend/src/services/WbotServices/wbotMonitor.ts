@@ -3,6 +3,7 @@ import { Client } from "whatsapp-web.js";
 
 import { getIO } from "../../libs/socket";
 import Whatsapp from "../../models/Whatsapp";
+import Setting from "../../models/Setting";
 import { logger } from "../../utils/logger";
 import { StartWhatsAppSession } from "./StartWhatsAppSession";
 
@@ -18,7 +19,7 @@ const wbotMonitor = async (
   const sessionName = whatsapp.name;
 
   try {
-    wbot.on("change_state", async newState => {
+    wbot.on("change_state", async (newState) => {
       logger.info(`Monitor session: ${sessionName}, ${newState}`);
       try {
         await whatsapp.update({ status: newState });
